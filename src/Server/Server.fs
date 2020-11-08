@@ -28,11 +28,8 @@ let update clientDispatch msg state =
         match msg with
         | Connect ->
             Connected, Cmd.none
-        | Action Ping ->
-            NewState Pong |> clientDispatch
-            state, Cmd.none
-        | Action Pong ->
-            NewState Ping |> clientDispatch
+        | Action list ->
+            NewState list |> clientDispatch
             state, Cmd.none
     | _ -> Disconnected, Cmd.none
 
@@ -45,7 +42,7 @@ let server =
     |> Bridge.withServerHub connections
     |> Bridge.run Giraffe.server
 
-let initState() : Task<ApplicationState> = Task.FromResult Ping
+let initState() : Task<ApplicationState> = Task.FromResult []
 
 let webApp = router {
     get "/api/init" (fun next ctx ->

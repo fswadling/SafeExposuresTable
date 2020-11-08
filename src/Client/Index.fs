@@ -44,12 +44,8 @@ let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
             let checkSocket = (fun _ -> ConnectSocket)
             { currentModel with SocketConnected = false }, Cmd.OfPromise.either delay () checkSocket checkSocket
 
-    | _, NewState Ping ->
-        let nextModel = { currentModel with State = Some Ping }
-        nextModel, Cmd.none
-
-    | _, NewState Pong ->
-        let nextModel = { currentModel with State = Some Pong }
+    | _, NewState list ->
+        let nextModel = { currentModel with State = Some list }
         nextModel, Cmd.none
 
     | _ -> currentModel, Cmd.none

@@ -6,11 +6,12 @@ module Route =
 
 let endpoint = "/socket"
 
-type Model =
-    { Input: string }
-    
-type ApplicationState = Ping | Pong
-    
+open System
+
+type Exposure = { ValueDate: DateTime; Volume: decimal}
+
+type ApplicationState = Exposure list
+
 type Msg =
     | InitialStateLoaded of Result<ApplicationState, string>
     | ConnectSocket
