@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 
 namespace Database
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("This is a safe stack application. Use dotnet fake build -t run in order to run it");
         }
     }
 }

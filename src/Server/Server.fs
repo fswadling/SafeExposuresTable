@@ -6,6 +6,10 @@ open Saturn
 
 open Shared
 
+[<Literal>]
+let ConnectionString =
+    @"Data Source=LPA-H-NB-182;Initial Catalog=SafeExposuresTable;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"
+
 type Storage () =
     let todos = ResizeArray<_>()
 

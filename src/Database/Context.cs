@@ -8,7 +8,7 @@ namespace Database
 {
     public class Context : DbContext
     {
-        public DbSet<Exposure> Exposures { get; set; }
+        public DbSet<Exposure> Exposures { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
