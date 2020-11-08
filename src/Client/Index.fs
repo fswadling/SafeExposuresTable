@@ -3,26 +3,56 @@ module Index
 open Elmish
 open Fable.Remoting.Client
 open Shared
+open Thoth.Fetch
+open Fable.Core
+open Elmish.Bridge
 
-type Model =
-    { Input: string }
+type Model = {
+    State: ApplicationState option
+    SocketConnected: bool
+}
 
-type Msg =
-    | Blank of int
-
-let todosApi =
-    Remoting.createApi()
-    |> Remoting.withRouteBuilder Route.builder
-    |> Remoting.buildProxy<ITodosApi>
+let initialState () = Fetch.tryFetchAs<FetchError, ApplicationState>("/api/init")
 
 let init(): Model * Cmd<Msg> =
-    let model = { Input = "" }
-    model, Cmd.none
+    let initialModel = { State = None; SocketConnected = false }
+    let loadStateCmd =
+        Cmd.OfPromise.either
+            initialState ()
+            (fun res ->
+                match res with
+                | Ok r ->  InitialStateLoaded (Ok r)
+                | _ -> InitialStateLoaded (Error "Unknown error")
+            )
+            (fun _ -> InitialStateLoaded (Error "Fetch error"))
+    initialModel, loadStateCmd
 
-let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
-    match msg with
-    | Blank x ->
-        model, Cmd.none
+let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
+    match currentModel.State, msg with
+    | _, InitialStateLoaded (Ok initialState)->
+        let nextModel = { State = Some initialState; SocketConnected = false }
+        nextModel, Cmd.ofMsg ConnectSocket
+
+    | _, ConnectSocket ->
+        try
+            Bridge.Send Connect
+            { currentModel with SocketConnected = true }, Cmd.none
+        with _ ->
+            let delay () = promise {
+                do! Async.Sleep 1000 |> Async.StartAsPromise
+            }
+            let checkSocket = (fun _ -> ConnectSocket)
+            { currentModel with SocketConnected = false }, Cmd.OfPromise.either delay () checkSocket checkSocket
+
+    | _, NewState Ping ->
+        let nextModel = { currentModel with State = Some Ping }
+        nextModel, Cmd.none
+
+    | _, NewState Pong ->
+        let nextModel = { currentModel with State = Some Pong }
+        nextModel, Cmd.none
+
+    | _ -> currentModel, Cmd.none
 
 open Fable.React
 open Fable.React.Props

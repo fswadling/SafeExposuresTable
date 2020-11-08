@@ -1,24 +1,60 @@
 module Server
 
-open Fable.Remoting.Server
-open Fable.Remoting.Giraffe
+open Elmish
+
 open Saturn
+open Giraffe
 
 open Shared
+
+open System.Threading.Tasks
+open FSharp.Control.Tasks.V2
+open Elmish.Bridge
+
 
 [<Literal>]
 let ConnectionString =
     @"Data Source=LPA-H-NB-182;Initial Catalog=SafeExposuresTable;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"
 
-let blankApi = {
-        blank = fun () -> async { return 1 }
-      }
+type ConnectionState =
+    | Connected
+    | Disconnected
 
-let webApp =
-    Remoting.createApi()
-    |> Remoting.withRouteBuilder Route.builder
-    |> Remoting.fromValue blankApi
-    |> Remoting.buildHttpHandler
+let connections = ServerHub<ConnectionState, ServerMsg, Msg>().RegisterServer(RS)
+
+let update clientDispatch msg state =
+    match msg with
+    | RS msg ->
+        match msg with
+        | Connect ->
+            Connected, Cmd.none
+        | Action Ping ->
+            NewState Pong |> clientDispatch
+            state, Cmd.none
+        | Action Pong ->
+            NewState Ping |> clientDispatch
+            state, Cmd.none
+    | _ -> Disconnected, Cmd.none
+
+let init _ () = Disconnected, Cmd.none
+
+let server =
+    Bridge.mkServer Shared.endpoint init update
+    |> Bridge.register RS
+    |> Bridge.whenDown Closed
+    |> Bridge.withServerHub connections
+    |> Bridge.run Giraffe.server
+
+let initState() : Task<ApplicationState> = Task.FromResult Ping
+
+let webApp = router {
+    get "/api/init" (fun next ctx ->
+        task {
+            let! res = initState()
+            return! json res next ctx
+        })
+    forward "/socket" server
+}
 
 let app =
     application {

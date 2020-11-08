@@ -2,6 +2,8 @@ source https://api.nuget.org/v3/index.json
 framework: netcoreapp3.1
 storage: none
 
+nuget Elmish.Bridge.Client
+nuget Elmish.Bridge.Giraffe
 nuget Fable.Remoting.Giraffe
 nuget FSharp.Data.SqlClient
 nuget Saturn
@@ -17,6 +19,7 @@ nuget Fable.Mocha
 nuget Fable.React
 nuget Fable.Remoting.Client
 nuget Fulma
+nuget Thoth.Fetch
 
 group Build
     source https://api.nuget.org/v3/index.json
